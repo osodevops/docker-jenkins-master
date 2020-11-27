@@ -1,0 +1,69 @@
+jenkins:
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+  systemMessage: "Jenkins configured automatically by Jenkins Configuration as Code plugin\n\n"
+  numExecutors: 1
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: ${JENKINS_ADMIN}
+          password: ${JENKINS_PASSWORD}
+
+security:
+  apiToken:
+    creationOfLegacyTokenEnabled: false
+    tokenGenerationOnCreationEnabled: false
+    usageStatisticsEnabled: true
+  globalJobDslSecurityConfiguration:
+    useScriptSecurity: false
+  sSHD:
+    port: -1
+
+tool:
+  dockerTool:
+    installations:
+    - name: "docker"
+  git:
+    installations:
+    - home: "git"
+      name: "Default"
+
+unclassified:
+  location:
+    url: ${JENKINS_URL}
+  awsCredentialsProvider:
+    endpointConfiguration:
+      serviceEndpoint: https://secretsmanager.${AWS_REGION}.amazonaws.com
+      signingRegion: ${AWS_REGION}
+
+jobs:
+  - script: >
+      folder('/seedJobs') {
+          displayName('Seed Jobs')
+          description('Folder for JobDSL Seed Jobs')
+      }
+  - script: >
+      pipelineJob('/seedJobs/createJobs') {
+          definition {
+              cpsScm {
+                  scm {
+                      git {
+                          id = "CIServer"
+                          remote {
+                              url("${GITHUB_REPO_URL}")
+                          }
+                          branch('${DSL_BRANCH}')
+                          extensions {
+                              wipeOutWorkspace()
+                          }
+                      }
+                  }
+                  scriptPath("Jenkinsfile")
+              }
+          }
+          triggers {
+            cron('@daily')
+          }
+      }
