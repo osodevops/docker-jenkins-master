@@ -3,7 +3,7 @@ USER root
 # Install base packages
 RUN apt-get update -y && \
     apt-get install apt-transport-https curl python-dev python-setuptools gcc make libssl-dev jq -y && \
-    easy_install pip \
+    apt-get install python-pip -y \
     && apt-get -y autoremove \
     && rm -rf /var/lib/apt/lists/*
 # Install Python packages
